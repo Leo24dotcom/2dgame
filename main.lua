@@ -24,6 +24,9 @@ function love.load()
 
     player.anim = player.animations.left
 
+    player.currHp = 100
+    player.maxHp = 100
+
     myNPC = NPC.new('sprites/player-sheet.png', 796, 216, 80, 0)
     drNPC = NPC.new('sprites/player-sheet.png', 200, 900, 50, 50)
 
@@ -154,6 +157,7 @@ function love.update(dt)
         player.anim:gotoFrame(2)
     end
 
+    checkGameOverZone()
     player.anim:update(dt)
 
     -- Update camera position
@@ -240,6 +244,7 @@ function love.draw()
                 drawInteractPrompt(nearbyNPC)
             end
         cam:detach()
+        drawHPBar()
 
         love.graphics.print("x = " .. math.floor(player.x) .. " y = " .. math.floor(player.y), 10, 10)
         inventory:draw()
@@ -277,5 +282,45 @@ function love.keypressed(key)
         if key == "e" and nearbyNPC then
             narrator:startScript(nearbyNPC)
         end
+    end
+end
+
+function drawHPBar()
+    local x = 500
+    local y = 20
+    local width = 200
+    local height = 20
+
+    -- Background
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    love.graphics.rectangle("fill", x, y, width, height)
+
+    -- Current health
+    local hpWidth = width * (player.currHp / player.maxHp)
+
+    love.graphics.setColor(0, 1, 0)
+    love.graphics.rectangle("fill", x, y, hpWidth, height)
+
+    -- Border
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("line", x, y, width, height)
+
+    love.graphics.print("HP: " .. player.currHp .. "/" .. player.maxHp, x, y + 25)
+
+    love.graphics.setColor(1, 1, 1)
+end
+
+function checkGameOverZone()
+    local zoneX = 400
+    local zoneY = 0
+    local zoneWidth = 300
+    local zoneHeight = 40
+
+    if player.x >= zoneX and
+       player.x <= zoneX + zoneWidth and
+       player.y >= zoneY and
+       player.y <= zoneY + zoneHeight then
+
+        gameState = "gameOver"
     end
 end
