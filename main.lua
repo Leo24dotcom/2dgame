@@ -29,6 +29,11 @@ function love.load()
 
     myNPC = NPC.new('sprites/player-sheet.png', 796, 216, 80, 0)
     drNPC = NPC.new('sprites/player-sheet.png', 200, 900, 50, 50)
+    Enemy = require 'enemy'
+    enemy1 = Enemy.new('enemies/eldritch-beast-with-skull-head-walking-forward-dbc4-spritesheet.png', 400, 400, {
+    frameW = 128, frameH = 128,  
+    damage = 10,
+})
 
     Inventory = require 'inventory'
     inventory = Inventory.new({
@@ -80,13 +85,24 @@ end
 
 function resetGame()
     -- reset player x,y to start positions
-    player.x = 400
-    player.y = 600
+    --player.x = 400
+    --player.y = 600
 
     -- Distance (in world pixels) at which the "E" prompt appears.
-    interactRange = 80
+    --interactRange = 80
 
     -- Set when the player is close enough to a bound NPC to interact.
+    --nearbyNPC = nil
+    player.x = 400
+    player.y = 600
+    player.currHp = player.maxHp
+
+    enemy1.x, enemy1.y = 400, 400
+    enemy1.originX, enemy1.originY = 400, 400
+    enemy1.attackCooldown = 0
+    enemy1.chasing = false
+
+    interactRange = 80
     nearbyNPC = nil
 end
 
@@ -113,6 +129,7 @@ function findNearbyNPC()
 end
 
 function love.update(dt)
+    if gameState ~= "play" then return end
     local dialogueOpen = narrator:isOpen()
 
     -- Freeze the player while a dialog is on screen so the conversation feels
@@ -193,6 +210,13 @@ function love.update(dt)
 
     myNPC:update(dt)
     drNPC:update(dt)
+    if not dialogueOpen then
+        enemy1:update(dt, player)
+    end
+
+    if player.currHp <= 0 then
+        gameState = "gameOver"
+    end
 
     -- Refresh proximity once per frame, only when no dialog is showing.
     if dialogueOpen then
@@ -238,6 +262,7 @@ function love.draw()
             player.anim:draw(player.spriteSheet, player.x, player.y, nil, 6, nil, 6, 9)
             myNPC:draw()
             drNPC:draw()
+            enemy1:draw()
             gameMap:drawLayer(gameMap.layers["Trees"])
 
             if nearbyNPC then
@@ -261,6 +286,12 @@ function love.keypressed(key)
     if key == "return" and gameState == "mainMenu" then
         resetGame()
         gameState = "play"
+        return
+    end
+
+    if key == "return" and gameState == "gameOver" then
+        resetGame()
+        gameState = "mainMenu"
         return
     end
 
